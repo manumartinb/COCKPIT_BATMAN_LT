@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>COCKPIT Batman LT - 3 diales de regimen + score compuesto</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root { --bg:#0d1117; --panel:#161b22; --text:#c9d1d9; --muted:#8b949e; --border:#30363d; }
+* { box-sizing: border-box; }
+body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       background:var(--bg); color:var(--text); padding:16px; }
+.obs-banner { max-width:1520px; margin:0 auto 14px auto; background:rgba(210,153,34,0.10);
+  border:1px solid #9a6700; border-left:4px solid #d29922; border-radius:6px; padding:12px 16px;
+  font-size:13px; line-height:1.55; color:#e3b341; }
+.obs-banner strong { color:#f0d264; }
+.obs-banner .sub { color:#b08a2e; font-size:12px; }
+.header { max-width:1520px; margin:0 auto 14px auto; }
+h1 { font-size:18px; margin:0 0 2px 0; font-weight:600; }
+.subtitle { color:var(--muted); font-size:13px; }
+.cockpit-row { max-width:1520px; margin:0 auto 14px auto; display:grid;
+  grid-template-columns: 1.6fr 1fr 1fr 1fr 1fr; gap:12px; }
+@media (max-width: 1000px) { .cockpit-row { grid-template-columns: 1fr 1fr; } }
+.dial { background:var(--panel); border:1px solid var(--border); border-radius:6px; padding:12px 14px; }
+.dial .label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.6px; }
+.dial .v { font-size:24px; font-weight:700; margin-top:2px; }
+.dial.main { border-left:3px solid #a78bfa; }
+.dial.main .v { font-size:34px; }
+.dial .d-date { font-size:11px; color:var(--muted); margin-top:4px; }
+.zone { display:inline-block; padding:2px 10px; border-radius:12px; font-size:12px; font-weight:600;
+  margin-left:8px; vertical-align:middle; }
+.zone.TURBO { background:rgba(63,185,80,0.35); color:#7ee787; border:1px solid #3fb950; }
+.zone.VERDE { background:rgba(26,127,55,0.20); color:#3fb950; }
+.zone.NEUTRA { background:rgba(154,103,0,0.20); color:#d29922; }
+.zone.ROJA { background:rgba(207,34,46,0.20); color:#f85149; }
+.zone.INDETERMINADO { background:rgba(139,148,158,0.2); color:#8b949e; }
+.stale-pill { display:inline-block; padding:1px 8px; border-radius:10px; font-size:10.5px;
+  font-weight:600; margin-left:6px; vertical-align:middle; }
+.stale-pill.ok { background:rgba(139,148,158,0.15); color:#8b949e; }
+.stale-pill.warn { background:rgba(154,103,0,0.25); color:#d29922; }
+.stale-pill.bad { background:rgba(207,34,46,0.25); color:#f85149; }
+.flag-on  { color:#3fb950; font-weight:700; }
+.flag-off { color:#8b949e; font-weight:700; }
+#chart { max-width:1520px; margin:0 auto; background:var(--panel); border:1px solid var(--border);
+  border-radius:6px; padding:8px; }
+.rules { max-width:1520px; margin:18px auto; background:var(--panel); border:1px solid var(--border);
+  border-radius:6px; padding:16px 20px 14px 20px; }
+.rules h2 { font-size:15px; margin:0 0 8px 0; font-weight:600; }
+.rules p { font-size:13px; line-height:1.6; color:#b6bec9; margin:6px 0; }
+.rules code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; background:#21262d;
+  padding:1px 5px; border-radius:3px; font-size:12px; color:var(--text); }
+#evidence { max-width:1520px; margin:24px auto 0 auto; display:flex; flex-direction:column; gap:18px; }
+.ev-card { background:var(--panel); border:1px solid var(--border); border-radius:6px; padding:20px 24px; }
+.ev-card h2 { font-size:17px; margin:0 0 4px 0; font-weight:600; }
+.ev-card .ev-tag { display:inline-block; font-size:10.5px; color:var(--muted);
+  text-transform:uppercase; letter-spacing:0.7px; margin-bottom:10px; }
+.ev-card p { font-size:13.5px; line-height:1.65; color:#b6bec9; margin:8px 0; }
+.ev-card p strong { color:var(--text); }
+.ev-card ul { font-size:13.5px; line-height:1.65; color:#b6bec9; margin:8px 0; padding-left:22px; }
+.ev-callout { background:#21262d; border-left:3px solid #58a6ff; padding:10px 14px;
+  border-radius:4px; font-size:13px; margin:12px 0; }
+.ev-callout.warn { border-left-color:#d29922; }
+.ev-table { width:100%; border-collapse:collapse; font-size:12.5px; margin:12px 0 4px 0; }
+.ev-table th, .ev-table td { padding:7px 10px; border-bottom:1px solid var(--border); text-align:right; }
+.ev-table thead th { background:#21262d; font-weight:600; border-bottom:1px solid #444c56; }
+.ev-table th:first-child, .ev-table td:first-child { text-align:left; }
+.ev-kpi { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-top:14px; }
+.ev-kpi-tile { background:#21262d; border:1px solid var(--border); border-radius:4px; padding:10px 12px; }
+.ev-kpi-tile .v { font-size:18px; font-weight:700; }
+.ev-kpi-tile .l { font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:0.6px; margin-top:2px; }
+.footer { max-width:1520px; margin:14px auto 0 auto; color:var(--muted); font-size:12px; text-align:center; }
+.footer a { color:#58a6ff; text-decoration:none; }
+.error { color:#f85149; text-align:center; padding:40px; font-family:monospace; }
+</style>
+</head>
+<body>
+
+<div class="obs-banner">
+  <strong>&#9888; FASE DE OBSERVACION</strong> &mdash; Score compuesto certificado con @APR
+  (2026-07-07) sobre backtest 2019-2026 y en rodaje LIVE sin poder sobre sizing. Caveat
+  principal del APR: la correlacion reciente (2023+) es <strong>~0.35-0.49</strong>, menor que
+  la agregada (los anios 2020/2022 cargan la primera mitad).<br>
+  <span class="sub">Rol: semaforo diario de regimen. NUNCA seleccion de estructuras intradia.
+  El guardian de stress (PUT_SKEW / TRIPLE_OR operativo) manda por encima.</span>
+</div>
+
+<div class="header">
+  <h1>COCKPIT Batman LT</h1>
+  <div class="subtitle">Los 3 canales de regimen day-level certificados, en un vistazo:
+  PUT SKEW (motor) + THETA valle + SKEW TS superficie &mdash; y su media como aguja principal</div>
+</div>
+
+<div class="cockpit-row">
+  <div class="dial main">
+    <div class="label">COCKPIT SCORE (percentil) <span class="stale-pill ok" id="score-stale" style="display:none">--</span></div>
+    <div><span class="v" id="score-v">--</span><span class="zone" id="score-zone">--</span></div>
+    <div class="d-date" id="score-date">--</div>
+  </div>
+  <div class="dial">
+    <div class="label">PUT SKEW <span class="stale-pill ok" id="put-stale" style="display:none">--</span></div>
+    <div class="v" id="put-v">--</div>
+    <div class="d-date" id="put-date">--</div>
+  </div>
+  <div class="dial">
+    <div class="label">THETA valle <span class="stale-pill ok" id="theta-stale" style="display:none">--</span></div>
+    <div class="v" id="theta-v">--</div>
+    <div class="d-date" id="theta-date">--</div>
+  </div>
+  <div class="dial">
+    <div class="label">SKEW TS superficie <span class="stale-pill ok" id="skts-stale" style="display:none">--</span></div>
+    <div class="v" id="skts-v">--</div>
+    <div class="d-date" id="skts-date">--</div>
+  </div>
+  <div class="dial">
+    <div class="label">Flag TRIPLE_OR (MAX-OR &ge;80)</div>
+    <div class="v" id="flag-v">--</div>
+    <div class="d-date">operativo V51 &middot; fuera del score (APR)</div>
+  </div>
+</div>
+
+<div id="chart"><div class="error">Cargando...</div></div>
+
+<div class="rules" style="border-left:3px solid #a78bfa;">
+  <h2>Como leer y usar esta pagina (en cristiano)</h2>
+  <p>
+    <strong>Que estas viendo.</strong> Tres termometros diarios que miden cosas DISTINTAS del
+    entorno para la estrategia Batman LT: cuanto se paga la proteccion con puts (PUT SKEW, el
+    motor), cuanto sangra por dia la pata comprada tipica (THETA del valle), y donde paga el
+    mercado la prima del skew de calls (SKEW TS de superficie). Como cada uno acierta en dias
+    distintos, su MEDIA &mdash; la aguja grande &mdash; es mejor brujula que cualquiera por
+    separado (eso es exactamente lo que certifico el APR).
+  </p>
+  <p>
+    <strong>Como se usa.</strong> Mira la aguja grande y su color: ROJA (&le;20) = dia flojo,
+    no pises el acelerador; NEUTRA = opera normal; VERDE (&ge;80) = prioridad a esta estrategia;
+    TURBO (&ge;95) = el verde raro y potente. En el backtest, el 10% de mejores dias de la aguja
+    gano con un 99% de acierto y su peor 5% de trades termino EN POSITIVO de media &mdash;
+    con la letra pequena de que esos son ~150 dias de muestra y la senal es mas suave desde 2023.
+  </p>
+  <p>
+    <strong>Lo que NO hace:</strong> no elige trades dentro del dia (para eso estan los scores
+    de seleccion), no es freno de emergencia en un crash (eso es el guardian PUT_SKEW/TRIPLE_OR
+    del sistema: en la racha mala de 2022 esta aguja no dio verde ni un dia &mdash; te habria
+    tenido en tamano minimo, no fuera), y no predice la direccion del SPX.
+  </p>
+  <p>
+    <strong>Las pastillas de fecha</strong>: cada dial tiene la suya (el THETA suele ir un dia
+    por detras: se alimenta de la corrida de la tarde del sistema). Si algun dial supera los
+    5 dias habiles de retraso, la aguja entera se declara INDETERMINADO &mdash; nunca se calcula
+    una media con piezas caducadas ni con menos de 3 diales.
+  </p>
+  <p>
+    <strong>El banderin TRIPLE_OR</strong> es el semaforo operativo del sistema (MAX-OR de
+    PUT y TENSION): se muestra por transparencia porque es lo cableado en produccion, pero el
+    APR demostro que NO debe entrar en la media (dado el resto, resta en vez de sumar).
+  </p>
+</div>
+
+<div class="rules">
+  <h2>Detalle tecnico: formula y fuentes</h2>
+  <p>
+    <code>COCKPIT_SCORE = mean( PUT_pct, THETA_pct, SKTS_pct )</code>, cada dial en percentil
+    expanding solo-pasado [0-100]; la aguja publicada es el percentil expanding del propio score.
+    Equiponderado a proposito: la perturbacion de pesos +/-20% (N=200) movio la correlacion
+    &lt;0.006 &mdash; no hay pesos magicos que defender.
+  </p>
+  <p>
+    Fuentes: PUT = <code>skew_25d_vs50_pct_expanding</code> @dte60 10:30 ET (misma serie del
+    dashboard PUT_SKEW_NIVEL); THETA = day-mean de theta_k2/SPX del universo Batman LT
+    (historico de backtest hasta mar-2026 + alimentacion diaria del sistema LIVE desde jul-2026;
+    el hueco intermedio se muestra tal cual); SKEW TS = la serie del dashboard SKEW_TS_CALL.
+    MAXOR excluido del score: partial dado el resto = <strong>-0.20</strong> (anade ruido);
+    su pata TENSION quedo degradada en la re-certificacion Gen3.
+  </p>
+</div>
+
+<div id="evidence">
+  <div class="ev-card">
+    <span class="ev-tag">1 &middot; Certificacion @APR (2026-07-07)</span>
+    <h2>Por que la media de 3 es mejor que el mejor dial</h2>
+    <p>
+      Validado sobre DOS universos de backtest (Gen3 neutro: 476.566 trades / 1.558 dias;
+      Madre TRUE: 44.758 / 1.361) con bootstrap POR DIA, permutacion, LOYO, terciles VIX y
+      perturbacion de parametros. La media de 3 bate al mejor dial individual (PUT) en ambos:
+    </p>
+    <div class="ev-kpi">
+      <div class="ev-kpi-tile"><div class="v">0.641 / 0.541</div><div class="l">r_dia score (Gen3 / Madre)</div></div>
+      <div class="ev-kpi-tile"><div class="v">0.561 / 0.401</div><div class="l">r_dia mejor dial (PUT)</div></div>
+      <div class="ev-kpi-tile"><div class="v">6/6 Gen3</div><div class="l">Anios positivos (LOYO)</div></div>
+      <div class="ev-kpi-tile"><div class="v">tau 1.00</div><div class="l">Monotonia deciles Gen3</div></div>
+      <div class="ev-kpi-tile"><div class="v">+38% / +106%</div><div class="l">R2 conjunto vs mejor single</div></div>
+      <div class="ev-kpi-tile"><div class="v">std &lt;0.006</div><div class="l">Perturbacion pesos +/-20%</div></div>
+    </div>
+    <p style="margin-top:10px">Ademas se valido el desfase real de produccion (THETA llega un
+    dia tarde): coste de solo 0.9%/1.3% de correlacion &mdash; el diseno desplegado es el certificado.</p>
+  </div>
+
+  <div class="ev-card">
+    <span class="ev-tag">2 &middot; Economia por corte</span>
+    <h2>Cohorte del score (backtest, cortes in-sample)</h2>
+    <table class="ev-table">
+      <thead><tr><th>Corte</th><th colspan="4">GEN3: N/dias &middot; mediana &middot; WR &middot; PF &middot; CVaR5</th>
+      <th colspan="4">MADRE: idem</th></tr></thead>
+      <tbody>
+        <tr><td>RAW</td><td colspan="4">476.566/1.558d &middot; +25.4 &middot; 74% &middot; 5.2 &middot; -85</td>
+            <td colspan="4">44.758/1.361d &middot; +28.4 &middot; 66% &middot; 4.3 &middot; -116</td></tr>
+        <tr><td>P50</td><td colspan="4">220.885/779d &middot; +52.1 &middot; 90% &middot; 44.5 &middot; -22</td>
+            <td colspan="4">21.414/681d &middot; +70.8 &middot; 84% &middot; 25.9 &middot; -38</td></tr>
+        <tr><td>P80</td><td colspan="4">75.040/312d &middot; +74.5 &middot; 96% &middot; 136.2 &middot; -11</td>
+            <td colspan="4">7.386/273d &middot; +107.8 &middot; 94% &middot; 103.3 &middot; -22</td></tr>
+        <tr><td><b>P90</b></td><td colspan="4"><b>33.518/156d &middot; +80.0 &middot; 99.0% &middot; 473 &middot; +3.7</b></td>
+            <td colspan="4"><b>2.874/137d &middot; +121.0 &middot; 99.4% &middot; 1102 &middot; +17.6</b></td></tr>
+        <tr><td>P95</td><td colspan="4">15.375/78d &middot; +80.7 &middot; 99.3% &middot; 425 &middot; +4.9</td>
+            <td colspan="4">1.438/69d &middot; +117.2 &middot; 99.1% &middot; 761 &middot; +12.1</td></tr>
+      </tbody>
+    </table>
+    <p style="color:#8b949e;font-size:12px">Monotonia perfecta en mean y mediana RAW&rarr;P90;
+    CVaR5 se vuelve POSITIVO en P90/P95 en ambos universos (el peor 5% gana de media).</p>
+  </div>
+
+  <div class="ev-card">
+    <span class="ev-tag">3 &middot; Honestidad</span>
+    <h2>Caveats del APR (sin maquillaje)</h2>
+    <ul>
+      <li><strong>Decay temporal:</strong> partido en mitades, la correlacion cae de 0.74 a 0.49
+      (Gen3) y de 0.72 a 0.35 (Madre). La direccion aguanta (2023-2025 positivos) pero la
+      magnitud reciente es ~0.35-0.49: es el numero que hay que citar.</li>
+      <li><strong>Elite P90 = 156/137 dias:</strong> el CVaR5 positivo es real en muestra pero
+      small-N; no certificable como estructural todavia.</li>
+      <li><strong>Cortes in-sample</strong> (percentiles globales del backtest, no asof).</li>
+      <li><strong>VIX-bajo en Madre debil</strong> (+0.11) y 2020/2024 Madre ~cero.</li>
+      <li><strong>Dial SKEW TS con 0 dias OOS</strong> al lanzamiento (fase observacion) y dial
+      THETA con hueco mar-jul 2026 (fin del backtest &rarr; inicio de la alimentacion LIVE) y
+      posible sesgo de composicion entre universo backtest y universo LIVE (guardrails activos;
+      ticket de calibracion abierto).</li>
+      <li><strong>Los dos universos comparten los mismos dias de mercado</strong> (una sola
+      historia 2019-2026): evidencia correlacionada, no dos experimentos independientes.</li>
+    </ul>
+    <div class="ev-callout warn">
+      Este cockpit NACE en observacion: sin poder automatico sobre sizing hasta acumular
+      meses de rodaje OOS real. La espera es parte del metodo.
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  Last update: <span id="updated-at">--</span> &middot;
+  <a href="https://github.com/manumartinb/COCKPIT_BATMAN_LT" target="_blank" rel="noopener">repo</a> &middot;
+  diales: <a href="https://manumartinb.github.io/PUT_SKEW_NIVEL_BATMAN_LT/" target="_blank" rel="noopener">PUT_SKEW</a> /
+  <a href="https://manumartinb.github.io/SKEW_TS_CALL_BATMAN_LT/" target="_blank" rel="noopener">SKEW_TS</a>
+</div>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script>
+function pill(id, busdays, warnThr) {
+  const el = document.getElementById(id);
+  if (busdays === null || busdays === undefined) return;
+  el.style.display = 'inline-block';
+  if (busdays <= 1) { el.className = 'stale-pill ok'; el.textContent = busdays === 0 ? 'hoy' : '1d'; }
+  else if (busdays <= warnThr + 2) { el.className = 'stale-pill warn'; el.textContent = busdays + 'd'; }
+  else { el.className = 'stale-pill bad'; el.textContent = 'STALE ' + busdays + 'd'; }
+}
+async function load() {
+  let d;
+  try {
+    const r = await fetch('data.json?_=' + Date.now(), { cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    d = await r.json();
+  } catch (e) {
+    document.getElementById('chart').innerHTML = '<div class="error">Error cargando data.json: ' + e.message + '</div>';
+    return;
+  }
+  const L = d.latest;
+  document.getElementById('score-v').textContent = (L.score_pct === null) ? '--' : L.score_pct.toFixed(1);
+  const z = document.getElementById('score-zone');
+  z.textContent = L.zone; z.className = 'zone ' + L.zone;
+  document.getElementById('score-date').textContent = (L.date || '--') + (L.reason ? ' - ' + L.reason : '');
+  const dm = { put: 'PUT', theta: 'THETA', skts: 'SKTS' };
+  for (const [pref, key] of Object.entries(dm)) {
+    const di = L.dials[key];
+    document.getElementById(pref + '-v').textContent = (di.pct === null) ? '--' : di.pct.toFixed(1);
+    document.getElementById(pref + '-date').textContent = di.date;
+    pill(pref + '-stale', di.stale_busdays, key === 'THETA' ? 3 : 2);
+  }
+  const maxStale = Math.max(...Object.values(L.dials).map(x => x.stale_busdays));
+  pill('score-stale', maxStale, 3);
+  const f = document.getElementById('flag-v');
+  f.textContent = L.maxor_flag.on ? 'ON (' + L.maxor_flag.value.toFixed(0) + ')' : 'OFF (' + L.maxor_flag.value.toFixed(0) + ')';
+  f.className = 'v ' + (L.maxor_flag.on ? 'flag-on' : 'flag-off');
+  document.getElementById('updated-at').textContent = d.generated_at;
+
+  const traces = [
+    { x: d.dates, y: d.score_pct, type: 'scatter', mode: 'lines', name: 'COCKPIT SCORE (pct)',
+      line: { color: '#a78bfa', width: 2.4 }, connectgaps: false,
+      hovertemplate: '%{x|%Y-%m-%d}<br><b>SCORE pct</b>: %{y:.1f}<extra></extra>' },
+    { x: d.dates, y: d.put, type: 'scatter', mode: 'lines', name: 'PUT SKEW', visible: 'legendonly',
+      line: { color: '#58a6ff', width: 1.2 }, connectgaps: false },
+    { x: d.dates, y: d.theta_pct, type: 'scatter', mode: 'lines', name: 'THETA valle', visible: 'legendonly',
+      line: { color: '#f0883e', width: 1.2 }, connectgaps: false },
+    { x: d.dates, y: d.skts_pct, type: 'scatter', mode: 'lines', name: 'SKEW TS', visible: 'legendonly',
+      line: { color: '#3fb950', width: 1.2 }, connectgaps: false },
+  ];
+  const layout = {
+    paper_bgcolor: '#161b22', plot_bgcolor: '#161b22',
+    font: { color: '#c9d1d9', family: '-apple-system, sans-serif', size: 12 },
+    height: 560, margin: { t: 40, r: 20, b: 50, l: 55 },
+    xaxis: { gridcolor: '#21262d', linecolor: '#30363d', type: 'date',
+      rangeselector: { buttons: [
+        { count: 30, label: '30D', step: 'day', stepmode: 'backward' },
+        { count: 90, label: '90D', step: 'day', stepmode: 'backward' },
+        { count: 1, label: '1A', step: 'year', stepmode: 'backward' },
+        { count: 3, label: '3A', step: 'year', stepmode: 'backward' },
+        { step: 'all', label: 'All' } ],
+        bgcolor: '#21262d', activecolor: '#6d28d9', font: { color: '#c9d1d9', size: 11 },
+        bordercolor: '#30363d', borderwidth: 1 },
+      rangeslider: { visible: false } },
+    yaxis: { range: [0, 100], gridcolor: '#21262d', linecolor: '#30363d',
+      title: { text: 'Percentil', font: { size: 12 } }, tickvals: [0, 20, 40, 60, 80, 95, 100] },
+    shapes: [
+      { type: 'rect', xref: 'paper', x0: 0, x1: 1, yref: 'y', y0: 95, y1: 100, fillcolor: '#3fb950', opacity: 0.20, line: { width: 0 }, layer: 'below' },
+      { type: 'rect', xref: 'paper', x0: 0, x1: 1, yref: 'y', y0: 80, y1: 95, fillcolor: '#1a7f37', opacity: 0.10, line: { width: 0 }, layer: 'below' },
+      { type: 'rect', xref: 'paper', x0: 0, x1: 1, yref: 'y', y0: 20, y1: 80, fillcolor: '#9a6700', opacity: 0.06, line: { width: 0 }, layer: 'below' },
+      { type: 'rect', xref: 'paper', x0: 0, x1: 1, yref: 'y', y0: 0, y1: 20, fillcolor: '#cf222e', opacity: 0.10, line: { width: 0 }, layer: 'below' },
+      { type: 'line', xref: 'paper', x0: 0, x1: 1, yref: 'y', y0: 95, y1: 95, line: { color: '#3fb950', width: 1, dash: 'dot' }, layer: 'below' },
+      { type: 'line', xref: 'paper', x0: 0, x1: 1, yref: 'y', y0: 80, y1: 80, line: { color: '#1a7f37', width: 1, dash: 'dash' }, layer: 'below' },
+      { type: 'line', xref: 'paper', x0: 0, x1: 1, yref: 'y', y0: 20, y1: 20, line: { color: '#cf222e', width: 1, dash: 'dash' }, layer: 'below' } ],
+    annotations: [
+      { xref: 'paper', x: 1, xanchor: 'right', yref: 'y', y: 97.5, text: 'TURBO', font: { color: '#7ee787', size: 10 }, showarrow: false, opacity: 0.85 },
+      { xref: 'paper', x: 1, xanchor: 'right', yref: 'y', y: 87, text: 'VERDE', font: { color: '#3fb950', size: 10 }, showarrow: false, opacity: 0.75 },
+      { xref: 'paper', x: 1, xanchor: 'right', yref: 'y', y: 50, text: 'NEUTRA', font: { color: '#d29922', size: 10 }, showarrow: false, opacity: 0.7 },
+      { xref: 'paper', x: 1, xanchor: 'right', yref: 'y', y: 10, text: 'ROJA', font: { color: '#f85149', size: 10 }, showarrow: false, opacity: 0.75 } ],
+    legend: { orientation: 'h', y: -0.18, x: 0.5, xanchor: 'center', bgcolor: 'rgba(0,0,0,0)' },
+    hovermode: 'x unified',
+  };
+  if (d.dates.length > 0) {
+    const last = d.dates[d.dates.length - 1];
+    const start = new Date(last); start.setDate(start.getDate() - 90);
+    layout.xaxis.range = [start.toISOString().slice(0, 10), last];
+  }
+  Plotly.newPlot('chart', traces, layout, { responsive: true, displaylogo: false,
+    modeBarButtonsToRemove: ['lasso2d', 'select2d', 'autoScale2d'] });
+}
+load();
+</script>
+</body>
+</html>
