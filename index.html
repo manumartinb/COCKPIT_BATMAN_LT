@@ -358,8 +358,19 @@ async function load() {
     const start = new Date(last); start.setDate(start.getDate() - 90);
     layout.xaxis.range = [start.toISOString().slice(0, 10), last];
   }
-  Plotly.newPlot('chart', traces, layout, { responsive: true, displaylogo: false,
-    modeBarButtonsToRemove: ['lasso2d', 'select2d', 'autoScale2d'] });
+  if (typeof Plotly === 'undefined') {
+    document.getElementById('chart').innerHTML =
+      '<div class="error">No se pudo cargar la libreria de graficos (Plotly). '
+      + 'Reintenta con Ctrl+Shift+R; si persiste, revisa el bloqueo de cdn.plot.ly.</div>';
+    return;
+  }
+  try {
+    Plotly.newPlot('chart', traces, layout, { responsive: true, displaylogo: false,
+      modeBarButtonsToRemove: ['lasso2d', 'select2d', 'autoScale2d'] });
+  } catch (e) {
+    document.getElementById('chart').innerHTML =
+      '<div class="error">Error dibujando el grafico: ' + e.message + '</div>';
+  }
 }
 load();
 </script>
