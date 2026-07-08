@@ -104,18 +104,16 @@ def serie_skts() -> pd.Series:
 
 
 def serie_theta_pct() -> pd.Series:
+    """SOLUCION B (2026-07-08): SOLO el HIST T0-only (mismo motor/universo Gen3
+    y snapshot 10:30 que todo el historico; lo extiende a diario
+    daily_theta_t0only.py). El acumulador LIVE del hook V51 ya NO se consume:
+    quedo como MONITOR (su universo [150+ DTE, vespertino] dio el 2026-07-07
+    un punto ~15 pts inflado por composicion -- ver ficha cockpit). Lag T-1,
+    validado por el F0 shift-test del APR y re-verificado 2026-07-08."""
     hist = pd.read_csv(THETA_HIST)
     datecol = next((c for c in ("d", "dia", "date") if c in hist.columns), hist.columns[0])
-    hist = hist.set_index(datecol)
-    hist.index.name = "date"
-    parts = [hist[["theta_day_mean_ref"]]]
-    if THETA_LIVE.exists():
-        live = pd.read_csv(THETA_LIVE)
-        if len(live):
-            live = live.set_index("date")[["theta_day_mean_ref"]]
-            parts.append(live)
-    raw = pd.concat(parts)
-    raw = raw[~raw.index.duplicated(keep="last")].sort_index()["theta_day_mean_ref"].astype(float)
+    raw = hist.set_index(datecol)["theta_day_mean_ref"].astype(float)
+    raw = raw[~raw.index.duplicated(keep="last")].sort_index()
     pct = raw.expanding(min_periods=MIN_PERIODS).rank(pct=True) * 100.0
     return pct.dropna()
 
