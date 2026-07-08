@@ -166,10 +166,33 @@ h1 { font-size:18px; margin:0 0 2px 0; font-weight:600; }
   <p>
     Fuentes: PUT = <code>skew_25d_vs50_pct_expanding</code> @dte60 10:30 ET (misma serie del
     dashboard PUT_SKEW_NIVEL); THETA = day-mean de theta_k2/SPX del universo Batman LT
-    (historico de backtest hasta mar-2026 + alimentacion diaria del sistema LIVE desde jul-2026;
-    el hueco intermedio se muestra tal cual); SKEW TS = la serie del dashboard SKEW_TS_CALL.
+    (feed T0-only continuo 2019 &rarr; hoy, mismo motor/universo/snapshot 10:30 en TODO el
+    historico; sin hueco); SKEW TS = la serie del dashboard SKEW_TS_CALL.
     MAXOR excluido del score: partial dado el resto = <strong>-0.20</strong> (anade ruido);
     su pata TENSION quedo degradada en la re-certificacion Gen3.
+  </p>
+
+  <h2 style="margin-top:20px">Como se calcula cada dial (los 3 pasos)</h2>
+  <p>
+    Los tres diales comparten la misma receta &mdash; una cantidad cruda se agrega a nivel DIA
+    y luego se percentiliza. No es un ranking de trade suelto: es el <strong>clima del dia</strong>.
+  </p>
+  <ol style="line-height:1.7;padding-left:20px">
+    <li><strong>Nivel de trade</strong> (la materia prima). Ej. THETA: cada Batman candidato
+      tiene su <code>theta_k2 / SPX</code> (theta de la pata larga / spot). PUT y SKEW TS parten
+      de una cantidad de mercado analoga.</li>
+    <li><strong>Nivel de dia</strong> (agregacion). Se toma la MEDIA de esa cantidad sobre TODOS
+      los trades del universo Gen3 de ese dia (~300-400 Batmans) &rarr; UN numero por dia.</li>
+    <li><strong>Percentil</strong> (el dial). Ese numero diario se rankea contra su propia
+      historia (percentil expanding solo-pasado, min 250 dias) &rarr; 0-100. Eso es el dial.</li>
+  </ol>
+  <p>
+    <strong>Por que la media es un resumen fiel:</strong> la dispersion de <code>theta_k2/SPX</code>
+    DENTRO de un mismo dia es baja y estable (CV intradia ~11%, 2019-2026; solo 2020/COVID sube a
+    ~18%). Los ~400 Batmans de una jornada casi coinciden; lo que se mueve de verdad es la media de
+    un dia a otro. Por eso promediar el universo del dia produce un termometro de regimen con sentido,
+    no una media que esconde caos. (Evidencia grafica por anio: doc &laquo;Dispersion THETA&raquo;
+    en la Biblioteca del hub.)
   </p>
 </div>
 
