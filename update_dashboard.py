@@ -97,6 +97,26 @@ def serie_put() -> pd.Series:
         "skew_25d_vs50_pct_expanding"].astype(float)
 
 
+def serie_spx() -> pd.Series:
+    """Cierre (snapshot 10:30) del SPX, para pintarlo de fondo en el grafico (eje derecho).
+
+    Fuente: el MISMO fichero y el MISMO filtro que el dial PUT (SKEW_PUT_ENRICHED,
+    side=PUT / snapshot 10:30 / dte_target=60) -> se actualiza a diario con el pipeline,
+    cae exactamente en las mismas fechas que el resto de series y no anade dependencias
+    ni llamadas de red. Cobertura medida 2026-08-28: 1.425/1.425 dias, 0 nulos.
+    NO entra en el score: es contexto visual (referencia de mercado), no un dial.
+    """
+    df = pd.read_csv(PUT_CSV, usecols=["trade_date", "snapshot_time", "side", "dte_target",
+                                       "underlying_price"], low_memory=False)
+    df = df[(df.side.astype(str).str.upper() == "PUT")
+            & (df.snapshot_time.astype(str) == "10:30:00")
+            & (pd.to_numeric(df.dte_target, errors="coerce") == 60)]
+    df["d"] = pd.to_datetime(df.trade_date, errors="coerce").dt.strftime("%Y-%m-%d")
+    df = df.dropna(subset=["d", "underlying_price"])
+    return df.sort_values("d").drop_duplicates("d", keep="last").set_index("d")[
+        "underlying_price"].astype(float)
+
+
 def serie_skts() -> pd.Series:
     d = json.loads(SKTS_DATA_JSON.read_text(encoding="utf-8"))
     s = pd.Series(d["pct"], index=d["dates"], dtype=float)
@@ -132,6 +152,7 @@ def build_data_payload() -> dict:
     skts = serie_skts()
     theta = serie_theta_pct()
     maxor = serie_maxor(put)
+    spx = serie_spx()   # contexto visual (eje derecho), NO entra en el score ni en el ASSERT
 
     idx = put.index.intersection(skts.index).intersection(theta.index).sort_values()
     n_int = len(idx)
@@ -186,6 +207,9 @@ def build_data_payload() -> dict:
         "score_pct": [_rn(x) for x in body.score_pct],
         "put": col(put), "theta_pct": col(theta), "skts_pct": col(skts),
         "maxor": col(maxor),
+        # SPX de contexto (eje derecho del grafico). Alineado al indice del score; los dias
+        # sin dato salen null y el trace los deja como hueco (connectgaps:false).
+        "spx": [_rn(x) for x in spx.reindex(body.index)],
     }
 
 
@@ -196,7 +220,7 @@ def _payload_data_changed(new_payload: dict) -> bool:
         old = json.loads(DATA_JSON.read_text(encoding="utf-8"))
     except Exception:
         return True
-    for k in ("dates", "score_pct", "latest", "n_days"):
+    for k in ("dates", "score_pct", "latest", "n_days", "spx"):
         if old.get(k) != new_payload.get(k):
             return True
     return False

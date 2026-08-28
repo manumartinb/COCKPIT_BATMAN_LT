@@ -311,6 +311,13 @@ async function load() {
   document.getElementById('updated-at').textContent = d.generated_at;
 
   const traces = [
+    // SPX de CONTEXTO (eje derecho). Va el primero para que quede por DEBAJO del score.
+    // No es un dial ni entra en el COCKPIT_SCORE: es la referencia de mercado, para leer
+    // las zonas del cockpit contra lo que hacia el indice. Fuente: underlying_price
+    // (snapshot 10:30) del mismo feed que el dial PUT.
+    { x: d.dates, y: d.spx || [], type: 'scatter', mode: 'lines', name: 'SPX (eje dcho.)',
+      yaxis: 'y2', line: { color: '#8b949e', width: 1.4 }, connectgaps: false, opacity: 0.85,
+      hovertemplate: '%{x|%Y-%m-%d}<br><b>SPX</b>: %{y:,.0f}<extra></extra>' },
     { x: d.dates, y: d.score_pct, type: 'scatter', mode: 'lines', name: 'COCKPIT SCORE (pct)',
       line: { color: '#a78bfa', width: 2.4 }, connectgaps: false,
       hovertemplate: '%{x|%Y-%m-%d}<br><b>SCORE pct</b>: %{y:.1f}<extra></extra>' },
@@ -324,7 +331,7 @@ async function load() {
   const layout = {
     paper_bgcolor: '#161b22', plot_bgcolor: '#161b22',
     font: { color: '#c9d1d9', family: '-apple-system, sans-serif', size: 12 },
-    height: 560, margin: { t: 40, r: 20, b: 50, l: 55 },
+    height: 560, margin: { t: 40, r: 62, b: 50, l: 55 },   // r ampliado para el eje SPX
     xaxis: { gridcolor: '#21262d', linecolor: '#30363d', type: 'date',
       rangeselector: { buttons: [
         { count: 30, label: '30D', step: 'day', stepmode: 'backward' },
@@ -337,6 +344,11 @@ async function load() {
       rangeslider: { visible: false } },
     yaxis: { range: [0, 100], gridcolor: '#21262d', linecolor: '#30363d',
       title: { text: 'Percentil', font: { size: 12 } }, tickvals: [0, 20, 40, 60, 80, 95, 100] },
+    // Eje derecho SOLO para el SPX: escala propia (autorange) para que el nivel del indice
+    // no aplaste la escala de percentiles. Sin rejilla propia para no ensuciar el fondo.
+    yaxis2: { overlaying: 'y', side: 'right', autorange: true, showgrid: false,
+      linecolor: '#30363d', tickfont: { color: '#8b949e', size: 11 },
+      title: { text: 'SPX', font: { size: 12, color: '#8b949e' } } },
     shapes: [
       { type: 'rect', xref: 'paper', x0: 0, x1: 1, yref: 'y', y0: 95, y1: 100, fillcolor: '#3fb950', opacity: 0.20, line: { width: 0 }, layer: 'below' },
       { type: 'rect', xref: 'paper', x0: 0, x1: 1, yref: 'y', y0: 80, y1: 95, fillcolor: '#1a7f37', opacity: 0.10, line: { width: 0 }, layer: 'below' },
